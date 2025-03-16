@@ -4,11 +4,14 @@ from dotenv import load_dotenv
 from mistralai.client import MistralClient
 from mistralai.models.chat_completion import ChatMessage
 
-# Load environment variables from .env file if it exists
+# Load environment variables
 load_dotenv()
 
-# Get API key from environment variable or Streamlit secrets
-api_key = os.getenv("MISTRAL_API_KEY") or st.secrets["MISTRAL_API_KEY"]
+# Get API key safely
+api_key = os.getenv("MISTRAL_API_KEY") or st.secrets.get("MISTRAL_API_KEY", None)
+if not api_key:
+    st.error("⚠️ API Key is missing! Please set MISTRAL_API_KEY in .env or Streamlit secrets.")
+    st.stop()
 
 # Initialize Mistral client
 client = MistralClient(api_key=api_key)
@@ -21,92 +24,61 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Add custom CSS
+# Add correct Streamlit CSS styling
 st.markdown("""
 <style>
-    .stChat {
+    div[data-testid="stChatMessage"] {
         border-radius: 10px;
         border: 1px solid #e0e0e0;
+        padding: 10px;
     }
-    .stTextInput {
+    input[type="text"] {
         border-radius: 5px;
-    }
-    .stMarkdown {
-        font-size: 16px;
+        padding: 8px;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Initialize session state for conversation tracking
+# Initialize session state
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state.messages = [
+        {"role": "system", "content": "Welcome to ShetJi Loan Advisor! Ask me anything about loans in India."}
+    ]
+
 if "conversation_context" not in st.session_state:
-    st.session_state.conversation_context = {"loan_type": None, "stage": "init"}
+    st.session_state.conversation_context = {"loan_type": None, "intent": None, "stage": "init"}
 
-# System prompt to guide AI behavior
-system_prompt = """You are an AI-driven loan advisory system that interacts with users step-by-step.  
-Your job is to understand *user intent dynamically* and provide a structured, intelligent response.  
-
-🔹 *Guidelines:*  
-- Detect *loan type* from user input.  
-- Identify whether the user wants *eligibility, application, or financial guidance*.  
-- If eligibility is selected, ask *one yes/no question at a time* until sufficient information is gathered.  
-- Use *natural conversation* instead of fixed questions.  
-- Always confirm before switching topics.  
-
-🔹 *Example Conversation Flow (Intent-Based)*  
-🟢 *User:* "I want a car loan."  
-🔵 *AI:* "Would you like help with eligibility, application steps, or improving financial stability?"  
-🟢 *User:* "Eligibility."  
-🔵 *AI:* "Do you have a stable income?"  
-🟢 *User:* "Yes."  
-🔵 *AI:* "Is your credit score above 650?"  
-🟢 *User:* "No."  
-🔵 *AI:* "You may qualify for subprime loans, but interest rates will be higher. Do you have a down payment?"  
-
-🔹 *Loan Types AI Can Handle:*  
-- Car Loans  
-- Home Loans  
-- Personal Loans  
-- Business Loans  
-- Education Loans  
-
-🔹 *Dynamic Intent Detection:*  
-- Recognize keywords like “loan,” “car/home/personal/business/education.”  
-- Understand responses like "Yes," "No," "Tell me more," etc.  
-- Adapt responses based on context without rigid rules.  
-
-Your goal is to *create a natural conversation* that is both structured and user-friendly.  
+# AI system prompt with INR context
+system_prompt = """You are an AI loan advisor for India. 
+All amounts should be in ₹ (INR), not $. Provide accurate information on:
+- Car, Home, Personal, Business, and Education loans.
+- Loan eligibility, EMI calculations, and application processes.
+- CIBIL scores, interest rates, and financial planning.
+Adapt to the user’s intent dynamically without rigid scripts.
 """
-
 
 def get_loan_advisor_response(conversation):
     """Fetch AI response dynamically using intent-based conversation handling."""
     
     messages = [ChatMessage(role="system", content=system_prompt)]
-    
-    # Include past conversation messages
     for msg in conversation:
         messages.append(ChatMessage(role=msg["role"], content=msg["content"]))
     
     try:
-        response = client.chat(
-            model="mistral-medium",
-            messages=messages
-        )
-        return response.choices[0].message.content
+        response = client.chat(model="mistral-medium", messages=messages)
+        return response.choices[0].message.content if response and response.choices else "I couldn't process your request."
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
-        return "I encountered an error. Please try again or contact support."
+        return "An error occurred. Please try again."
 
 # Display chat interface
 st.title("💰 ShetJi Loan Advisor - AI Loan Assistant")
 st.markdown("""
-Welcome to ShetJi Loan Advisor! I can assist you with:
-- Understanding different loan types (Car, Home, Personal, Business, Education)
-- Checking loan eligibility (CIBIL score, income requirements)
-- Understanding EMI, interest rates, and loan tenures
-- Application process guidance for Indian banks and NBFCs
+Welcome! I can help with:
+✅ Understanding different loans (Home, Car, Personal, Business, Education)  
+✅ Loan eligibility (CIBIL score, income, down payment)  
+✅ EMI calculations, interest rates in ₹ INR  
+✅ Application process guidance for Indian banks  
 """)
 
 # Display chat messages
@@ -116,12 +88,11 @@ for message in st.session_state.messages:
 
 # Get user input
 if prompt := st.chat_input("Ask me about loans in India..."):
-    # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
+    
     with st.chat_message("user"):
         st.markdown(prompt)
     
-    # Get and display assistant response
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             response = get_loan_advisor_response(st.session_state.messages)
