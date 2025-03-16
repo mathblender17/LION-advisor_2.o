@@ -15,7 +15,7 @@ client = MistralClient(api_key=api_key)
 
 # Set page configuration
 st.set_page_config(
-    page_title="ShetJi Advisor - Loan Assistant",
+    page_title="ShetJi Loan Advisor ",
     page_icon="💰",
     layout="centered",
     initial_sidebar_state="collapsed"
