@@ -105,9 +105,9 @@ Step 2: Based on User Response, Proceed with a Crisp Answer
     return response.choices[0].message.content
 
 # Display chat interface
-st.title("🦁 LION Advisor - Your Loan Assistant")
+st.title("ShetJi LOAN Advisor - Your Loan Assistant")
 st.markdown("""
-Welcome to LION Advisor! I'm here to help you with:
+Welcome to LOAN Advisor! I'm here to help you with:
 - Understanding different loan types
 - Loan eligibility requirements
 - Interest rates and terms
