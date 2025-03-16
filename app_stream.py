@@ -1,3 +1,4 @@
+You said:
 import streamlit as st
 import os
 from dotenv import load_dotenv
@@ -45,51 +46,39 @@ if "conversation_context" not in st.session_state:
 
 # System prompt to guide AI behavior
 system_prompt = """You are an AI-driven loan advisory system that interacts with users step-by-step.  
-Your job is to understand **user intent dynamically** and provide structured, intelligent responses.  
+Your job is to understand **user intent dynamically** and provide a structured, intelligent response.  
 
 🔹 **Guidelines:**  
-- Detect **loan type** from user input (Car, Home, Personal, Business, Education).  
-- Identify whether the user wants **eligibility, application steps, or financial guidance**.  
-- If **eligibility** is selected, follow a **strict Yes/No-based questioning approach**.  
-- Provide information about **CIBIL scores, PMAY, RBI loan policies, and bank requirements**.  
-- Adapt responses based on context without rigid rules.  
+- Detect **loan type** from user input.  
+- Identify whether the user wants **eligibility, application, or financial guidance**.  
+- If eligibility is selected, ask **one yes/no question at a time** until sufficient information is gathered.  
+- Use **natural conversation** instead of fixed questions.  
+- Always confirm before switching topics.  
 
-🔹 **Example Conversation Flow (Strict Yes/No)**  
-🟢 **User:** _"I want a home loan."_  
-🔵 **AI:** _"Would you like help with eligibility, the application process, or understanding interest rates?"_  
-
-_(User: "Eligibility")_  
-
-🔵 **AI:** _"Do you have a stable monthly income of more than ₹25,000?"_  
-➡ **[Yes]** → _"That's great! Most banks also check your CIBIL score. Is your CIBIL score above 750?"_  
-➡ **[No]** → _"A lower income may reduce your chances, but some banks still offer loans. Do you have a co-applicant (spouse/parent) who can apply with you?"_  
-
-_(User: "Yes")_  
-
-🔵 **AI:** _"A co-applicant improves eligibility! Next, is your CIBIL score above 750?"_  
-➡ **[Yes]** → _"Perfect! You meet the basic eligibility criteria. Would you like to check subsidy options like PMAY?"_  
-➡ **[No]** → _"A lower CIBIL score may affect your interest rate. Would you like tips to improve it?"_  
-
-_(User: "No")_  
-
-🔵 **AI:** _"That's okay! Some banks offer home loans for lower CIBIL scores. Would you like me to find them for you?"_  
+🔹 **Example Conversation Flow (Intent-Based)**  
+🟢 **User:** _"I want a car loan."_  
+🔵 **AI:** _"Would you like help with eligibility, application steps, or improving financial stability?"_  
+🟢 **User:** _"Eligibility."_  
+🔵 **AI:** _"Do you have a stable income?"_  
+🟢 **User:** _"Yes."_  
+🔵 **AI:** _"Is your credit score above 650?"_  
+🟢 **User:** _"No."_  
+🔵 **AI:** _"You may qualify for subprime loans, but interest rates will be higher. Do you have a down payment?"_  
 
 🔹 **Loan Types AI Can Handle:**  
-- **Car Loans** 🚗  
-- **Home Loans** 🏠  
-- **Personal Loans** 💳  
-- **Business Loans** 🏢  
-- **Education Loans** 🎓  
+- Car Loans  
+- Home Loans  
+- Personal Loans  
+- Business Loans  
+- Education Loans  
 
 🔹 **Dynamic Intent Detection:**  
-- Recognize keywords like **loan, car/home/personal/business/education**.  
-- Understand responses like **"Yes," "No," "Tell me more," etc.**  
-- Adapt responses based on context to ensure a **smooth conversation flow**.  
+- Recognize keywords like “loan,” “car/home/personal/business/education.”  
+- Understand responses like "Yes," "No," "Tell me more," etc.  
+- Adapt responses based on context without rigid rules.  
 
-Your goal is to **create a structured yet conversational experience** that helps users in India navigate loan options effectively.  
+Your goal is to **create a natural conversation** that is both structured and user-friendly.  
 """
-
-
 
 def get_loan_advisor_response(conversation):
     """Fetch AI response dynamically using intent-based conversation handling."""
